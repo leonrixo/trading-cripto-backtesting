@@ -5,7 +5,7 @@ def _sanitize(value):
     if value is None:
         return None
     try:
-        if math.isnan(value):
+        if not math.isfinite(value):
             return None
     except TypeError:
         pass
@@ -29,10 +29,10 @@ def build_response(symbol: str, df, result: dict, metrics: dict) -> dict:
     trades = [
         {
             "entry_date": t["entry_date"].strftime("%Y-%m-%d"),
-            "entry_price": float(t["entry_price"]),
+            "entry_price": _sanitize(t["entry_price"]),
             "exit_date": t["exit_date"].strftime("%Y-%m-%d"),
-            "exit_price": float(t["exit_price"]),
-            "pnl_pct": float(t["pnl_pct"]),
+            "exit_price": _sanitize(t["exit_price"]),
+            "pnl_pct": _sanitize(t["pnl_pct"]),
             "exit_reason": t["exit_reason"],
         }
         for t in result["trades"]
