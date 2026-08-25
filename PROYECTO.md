@@ -2,7 +2,8 @@
 
 **TL;DR:** Sistema en Python para probar (backtestear) estrategias de trading en cripto
 sobre datos históricos, antes de arriesgar dinero real. v1: cruce de medias móviles sobre
-BTC/USDT y ETH/USDT, timeframe diario. En construcción — aún no hay código.
+BTC/USDT y ETH/USDT, timeframe diario. Sistema implementado y corrido contra datos reales
+de Binance (ver Estado actual más abajo).
 
 ## Objetivo
 
@@ -37,15 +38,16 @@ que antes solo estaban al alcance de fondos/instituciones.
 ## Estado actual
 
 Diseño aprobado (2026-08-25). Implementación completa (Tasks 1-7): datos, estrategia,
-motor de backtest, métricas y reporte funcionando end-to-end. Primera corrida real
-contra la API pública de Binance (2026-08-25), cruce de medias móviles (fast=20,
-slow=50) con stop-loss de 5% y capital inicial de $10,000, sobre ~2 años de velas
-diarias:
+motor de backtest, métricas y reporte funcionando end-to-end. Corrida real contra la API
+pública de Binance (2026-08-25), tras la ronda de fixes de la revisión final (bloqueo de
+re-entrada post-stop-loss y descarte de la vela del día en formación), cruce de medias
+móviles (fast=20, slow=50) con stop-loss de 5% y capital inicial de $10,000, sobre ~2
+años de velas diarias:
 
 | Símbolo  | total_return | win_rate | max_drawdown | sharpe_ratio | num_trades |
 |----------|--------------|----------|---------------|--------------|------------|
-| BTC/USDT | 0.6388 (63.9%) | 0.4667 (46.7%) | -0.2724 (-27.2%) | 1.0076 | 15 |
-| ETH/USDT | 0.7543 (75.4%) | 0.3636 (36.4%) | -0.3926 (-39.3%) | 0.8661 | 11 |
+| BTC/USDT | 0.4866 (48.7%) | 0.5556 (55.6%) | -0.2363 (-23.6%) | 0.8868 | 9 |
+| ETH/USDT | 0.5076 (50.8%) | 0.3333 (33.3%) | -0.2483 (-24.8%) | 0.7491 | 6 |
 
 Reportes completos (gráfica de precio+señales+equity y métricas) en `reports/`.
 
