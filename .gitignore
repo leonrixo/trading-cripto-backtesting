@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+data/*.csv
+reports/*.png
+reports/*.txt
+.worktrees/
+.superpowers/

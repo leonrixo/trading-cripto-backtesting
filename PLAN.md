@@ -31,7 +31,9 @@ archivos reales. `main.py` orquesta todo para ambos símbolos.
 
 **Files:**
 - Create: `requirements.txt`
-- Create: `.gitignore`
+- Modify: `.gitignore` (ya existe con entradas de infraestructura de worktree; solo
+  verificar que ya cubre `__pycache__/`, `*.pyc`, `.pytest_cache/`, `.venv/`,
+  `data/*.csv`, `reports/*.png`, `reports/*.txt` — si falta alguna, añadirla)
 - Create: `tests/conftest.py`
 - Create: `src/__init__.py` (vacío, solo para que las herramientas reconozcan la carpeta)
 
@@ -50,12 +52,16 @@ matplotlib>=3.7
 pytest>=7.4
 ```
 
-- [ ] **Step 2: Crear `.gitignore`**
+- [ ] **Step 2: Verificar `.gitignore`**
+
+Ya existe (creado junto con el repo). Confirmar que contiene al menos estas líneas
+(añadir las que falten):
 
 ```
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
 data/*.csv
 reports/*.png
 reports/*.txt
