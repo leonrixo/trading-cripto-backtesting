@@ -51,5 +51,23 @@ def run_backtest(
 
         equity.append(cash + position * price)
 
+    # Force-close any open position at end of data
+    if position > 0.0:
+        last_date = df.index[-1]
+        last_price = df.iloc[-1]["close"]
+        cash += position * last_price
+        pnl_pct = (last_price - entry_price) / entry_price
+        trades.append({
+            "entry_date": entry_date,
+            "exit_date": last_date,
+            "entry_price": entry_price,
+            "exit_price": last_price,
+            "pnl_pct": pnl_pct,
+            "exit_reason": "end_of_data",
+        })
+        position = 0.0
+        entry_price = None
+        entry_date = None
+
     equity_curve = pd.Series(equity, index=df.index, name="equity")
     return {"equity_curve": equity_curve, "trades": trades}
