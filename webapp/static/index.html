@@ -1,1 +1,210 @@
-<!doctype html><title>placeholder</title>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backtester · Cruce de medias</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f1219'/%3E%3Cpath d='M5 22l6-7 5 4 4-7 7 5' fill='none' stroke='%237c6bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ───────────────────────── Header ───────────────────────── -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="34" height="34">
+          <rect width="32" height="32" rx="9" fill="url(#brandGrad)"/>
+          <path d="M5 22l6-7 5 4 4-7 7 5" fill="none" stroke="#0b0d13" stroke-width="2.6"
+                stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+          <defs>
+            <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#8f7dff"/>
+              <stop offset="100%" stop-color="#43e0c0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      <div class="brand__text">
+        <h1>Backtester</h1>
+        <p>Cruce de medias móviles · velas diarias de Binance</p>
+      </div>
+    </div>
+
+    <dl class="params" aria-label="Parámetros fijos de la estrategia">
+      <div class="params__item"><dt>MA rápida</dt><dd>20</dd></div>
+      <div class="params__item"><dt>MA lenta</dt><dd>50</dd></div>
+      <div class="params__item"><dt>Stop-loss</dt><dd>5%</dd></div>
+      <div class="params__item"><dt>Capital</dt><dd>$10,000</dd></div>
+    </dl>
+  </header>
+
+  <!-- ───────────────────────── Consola ───────────────────────── -->
+  <section class="console" aria-label="Configuración de la corrida">
+    <div class="field">
+      <label for="symbol">Símbolo</label>
+      <div class="select-wrap">
+        <select id="symbol" aria-describedby="console-hint">
+          <option value="">Cargando símbolos…</option>
+        </select>
+        <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <button id="run" class="btn" type="button">
+      <span class="btn__spinner" aria-hidden="true"></span>
+      <span class="btn__label">Correr backtest</span>
+    </button>
+
+    <p class="console__hint" id="console-hint">
+      Se descargan ~730 días de velas diarias en cada corrida — tarda unos segundos.
+    </p>
+  </section>
+
+  <!-- ───────────────────────── Banner de error ───────────────────────── -->
+  <div id="error" class="banner" role="alert" hidden>
+    <svg class="banner__icon" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M10 5.75v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="10" cy="14" r="1.05" fill="currentColor"/>
+    </svg>
+    <div class="banner__body">
+      <strong>No se pudo correr el backtest</strong>
+      <span id="error-message"></span>
+    </div>
+    <button id="error-dismiss" class="banner__close" type="button" aria-label="Cerrar aviso de error">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ───────────────────────── Estado: vacío ───────────────────────── -->
+  <section id="empty" class="empty">
+    <svg class="empty__art" viewBox="0 0 220 90" aria-hidden="true">
+      <path d="M4 76 L28 58 L52 66 L76 38 L100 48 L124 22 L148 34 L172 16 L196 26 L216 10"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" opacity=".55"/>
+      <path d="M4 84 L28 78 L52 74 L76 70 L100 62 L124 58 L148 50 L172 44 L196 38 L216 30"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 6"
+            stroke-linecap="round" opacity=".3"/>
+    </svg>
+    <h2>Todavía no hay resultados</h2>
+    <p>Elige un símbolo y corre el backtest para ver métricas y gráficas.</p>
+  </section>
+
+  <!-- ───────────────────────── Estado: cargando ───────────────────────── -->
+  <section id="loading" class="loading" hidden aria-live="polite">
+    <div class="loading__head">
+      <span class="loading__pulse" aria-hidden="true"></span>
+      <p>
+        Corriendo backtest de <strong id="loading-symbol">—</strong>
+        <span class="loading__timer" id="loading-timer">0.0s</span>
+      </p>
+    </div>
+    <div class="skeleton-metrics" aria-hidden="true">
+      <div class="skeleton skeleton--card"></div>
+      <div class="skeleton skeleton--card"></div>
+      <div class="skeleton skeleton--card"></div>
+      <div class="skeleton skeleton--card"></div>
+      <div class="skeleton skeleton--card"></div>
+    </div>
+    <div class="skeleton skeleton--chart" aria-hidden="true"></div>
+  </section>
+
+  <!-- ───────────────────────── Resultados ───────────────────────── -->
+  <main id="results" class="results" hidden>
+
+    <div class="results__head">
+      <h2 id="results-symbol">—</h2>
+      <p id="results-meta" class="results__meta">—</p>
+    </div>
+
+    <section class="metrics" aria-label="Métricas del backtest">
+      <article class="metric">
+        <h3>Retorno total</h3>
+        <p class="metric__value" id="m-total-return">—</p>
+        <p class="metric__note">Sobre el capital inicial</p>
+      </article>
+      <article class="metric">
+        <h3>Win rate</h3>
+        <p class="metric__value" id="m-win-rate">—</p>
+        <p class="metric__note">Operaciones ganadoras</p>
+      </article>
+      <article class="metric">
+        <h3>Max drawdown</h3>
+        <p class="metric__value" id="m-max-drawdown">—</p>
+        <p class="metric__note">Caída máxima desde un pico</p>
+      </article>
+      <article class="metric">
+        <h3>Sharpe</h3>
+        <p class="metric__value" id="m-sharpe">—</p>
+        <p class="metric__note">Retorno ajustado por riesgo</p>
+      </article>
+      <article class="metric">
+        <h3>Operaciones</h3>
+        <p class="metric__value" id="m-num-trades">—</p>
+        <p class="metric__note">Ciclos de entrada y salida</p>
+      </article>
+    </section>
+
+    <figure class="panel">
+      <figcaption class="panel__head">
+        <h3>Precio y medias móviles</h3>
+        <p>Entradas y salidas derivadas de las operaciones ejecutadas</p>
+      </figcaption>
+      <div id="chart-price" class="panel__chart"></div>
+    </figure>
+
+    <figure class="panel">
+      <figcaption class="panel__head">
+        <h3>Curva de equity</h3>
+        <p>Valor de la cuenta a lo largo del periodo</p>
+      </figcaption>
+      <div id="chart-equity" class="panel__chart panel__chart--short"></div>
+    </figure>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h3>Operaciones</h3>
+        <p id="trades-count">—</p>
+      </div>
+      <div class="table-wrap">
+        <table class="trades">
+          <thead>
+            <tr>
+              <th scope="col">Entrada</th>
+              <th scope="col">Salida</th>
+              <th scope="col" class="num">Precio entrada</th>
+              <th scope="col" class="num">Precio salida</th>
+              <th scope="col" class="num">P&amp;L</th>
+              <th scope="col">Motivo</th>
+            </tr>
+          </thead>
+          <tbody id="trades-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span>App local · sin build step · Plotly.js vía CDN</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
