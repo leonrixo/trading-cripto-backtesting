@@ -5,11 +5,14 @@
 (function () {
   "use strict";
 
-  /* ── Paleta compartida con style.css (las gráficas no leen CSS) ── */
+  /* ── Paleta compartida con style.css (las gráficas no leen CSS) ──
+     OJO: `faint` es el espejo de --text-faint en style.css y se usa en los ticks de
+     los ejes, que son texto chico. Si cambia uno tiene que cambiar el otro; el valor
+     cumple 4.5:1 de WCAG AA sobre el fondo de los paneles (5.07:1). */
   var C = {
     text:      "#e9edf6",
     dim:       "#98a1b6",
-    faint:     "#5f6879",
+    faint:     "#7c879d",
     grid:      "rgba(255,255,255,.055)",
     axis:      "rgba(255,255,255,.12)",
     surface:   "#161a27",

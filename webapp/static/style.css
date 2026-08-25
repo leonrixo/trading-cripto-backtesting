@@ -20,7 +20,13 @@
   /* texto */
   --text:          #e9edf6;
   --text-dim:      #98a1b6;
-  --text-faint:    #5f6879;
+  /* --text-faint se usa en texto de 11-12.5px (chips, notas de métricas, ticks de las
+     gráficas), así que le toca el 4.5:1 de WCAG AA para texto normal, no el 3:1 de
+     texto grande. Verificado contra el fondo MÁS CLARO donde aparece —el techo del
+     gradiente de .console, #1b1d29— → 4.63:1; sobre --bg pelado, 5.41:1. Es el tono
+     más oscuro que cumple, para conservar el escalón con --text-dim.
+     Si lo cambias, cambia también C.faint en app.js (ticks de Plotly). */
+  --text-faint:    #7c879d;
 
   /* acento e intención */
   --accent:        #7c6bff;
