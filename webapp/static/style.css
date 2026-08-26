@@ -19,7 +19,7 @@
 
   /* texto */
   --text:          #e9edf6;
-  --text-dim:      #98a1b6;
+  --text-dim:      #aab4c8;
   /* --text-faint se usa en texto de 11-12.5px (chips, notas de métricas, ticks de las
      gráficas), así que le toca el 4.5:1 de WCAG AA para texto normal, no el 3:1 de
      texto grande. Verificado contra el fondo MÁS CLARO donde aparece —el techo del

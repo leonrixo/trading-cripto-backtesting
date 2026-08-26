@@ -7,3 +7,4 @@ reports/*.png
 reports/*.txt
 .worktrees/
 .superpowers/
+.impeccable/
