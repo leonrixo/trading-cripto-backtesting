@@ -51,6 +51,20 @@ años de velas diarias:
 
 Reportes completos (gráfica de precio+señales+equity y métricas) en `reports/`.
 
+## Interfaz web
+
+Además del CLI (`src/main.py`), hay una interfaz web local para correr el backtester
+eligiendo el símbolo desde un menú, con gráficas interactivas. Ver
+[WEBAPP.md](WEBAPP.md) para el diseño completo.
+
+Para correrla:
+
+```bash
+.venv/Scripts/python.exe webapp/server.py
+```
+
+Y abrir `http://127.0.0.1:8000` en el navegador.
+
 ## Próximos pasos
 
 - [x] Escribir plan de implementación (script de datos, motor de backtest, estrategia,
