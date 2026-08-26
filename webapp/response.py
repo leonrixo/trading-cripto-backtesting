@@ -12,11 +12,13 @@ def _sanitize(value):
     return float(value)
 
 
-def build_response(symbol: str, df, result: dict, metrics: dict) -> dict:
+def build_response(symbol: str, df, result: dict, metrics: dict, params: dict) -> dict:
     """
     df: output de strategy.generate_signals (columnas close, fast_ma, slow_ma).
     result: output de backtest.run_backtest ({"equity_curve": ..., "trades": [...]}).
     metrics: output de metrics.compute_metrics.
+    params: dict plano de parámetros de la estrategia (fast_window, slow_window,
+        stop_loss_pct, initial_capital); se pasa tal cual, sin sanitizar.
     Regresa un dict listo para serializar a JSON: fechas como strings ISO, NaN
     convertido a None (JSON no tiene NaN literal válido).
     """
@@ -49,4 +51,5 @@ def build_response(symbol: str, df, result: dict, metrics: dict) -> dict:
         "equity_curve": equity_curve,
         "trades": trades,
         "metrics": metrics_out,
+        "params": params,
     }

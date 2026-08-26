@@ -1,4 +1,3 @@
-import math
 import pandas as pd
 from response import build_response
 
@@ -32,10 +31,17 @@ def test_build_response_sanitizes_nan_and_shapes_output():
         "sharpe_ratio": 1.5,
         "num_trades": 1,
     }
+    params = {
+        "fast_window": 20,
+        "slow_window": 50,
+        "stop_loss_pct": 0.05,
+        "initial_capital": 10_000.0,
+    }
 
-    response = build_response("BTC/USDT", df, result, metrics)
+    response = build_response("BTC/USDT", df, result, metrics, params)
 
     assert response["symbol"] == "BTC/USDT"
+    assert response["params"] == params
     assert response["dates"] == ["2024-01-01", "2024-01-02", "2024-01-03"]
     assert response["close"] == [100.0, 102.0, 104.0]
     assert response["fast_ma"][0] is None
@@ -102,8 +108,16 @@ def test_build_response_sanitizes_inf_and_nan_in_trades():
         "sharpe_ratio": 1.5,
         "num_trades": 3,
     }
+    params = {
+        "fast_window": 20,
+        "slow_window": 50,
+        "stop_loss_pct": 0.05,
+        "initial_capital": 10_000.0,
+    }
 
-    response = build_response("BTC/USDT", df, result, metrics)
+    response = build_response("BTC/USDT", df, result, metrics, params)
+
+    assert response["params"] == params
 
     # Verify trades have None for NaN/inf values
     assert response["trades"][0]["entry_price"] is None
