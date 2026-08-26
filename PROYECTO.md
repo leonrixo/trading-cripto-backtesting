@@ -1,9 +1,11 @@
 # Trading cripto - Sistema de backtesting
 
 **TL;DR:** Sistema en Python para probar (backtestear) estrategias de trading en cripto
-sobre datos históricos, antes de arriesgar dinero real. v1: cruce de medias móviles sobre
-BTC/USDT y ETH/USDT, timeframe diario. Sistema implementado y corrido contra datos reales
-de Binance (ver Estado actual más abajo).
+sobre datos históricos, antes de arriesgar dinero real. v1: cruce de medias móviles,
+timeframe diario, 14 pares cripto/USDT en Binance. Tiene un CLI (`src/main.py`, corre
+BTC/ETH fijos) y una interfaz web local (`webapp/`, símbolo elegible desde un menú,
+gráficas interactivas) — ambos funcionando y corridos contra datos reales de Binance.
+Pendiente: nadie ha abierto la interfaz web en un navegador todavía (ver "Pendientes").
 
 ## Objetivo
 
@@ -53,9 +55,13 @@ Reportes completos (gráfica de precio+señales+equity y métricas) en `reports/
 
 ## Interfaz web
 
-Además del CLI (`src/main.py`), hay una interfaz web local para correr el backtester
-eligiendo el símbolo desde un menú, con gráficas interactivas. Ver
-[WEBAPP.md](WEBAPP.md) para el diseño completo.
+Además del CLI (`src/main.py`, que sigue fijo en BTC/ETH), hay una interfaz web local
+(FastAPI + frontend HTML/CSS/JS a medida, sin build step) para correr el backtester
+eligiendo el símbolo desde un menú de 14 pares, con gráficas interactivas (Plotly.js):
+precio + medias móviles + marcadores de entrada/salida (stop-loss se ve distinto de una
+salida normal), y curva de equity. Los parámetros de estrategia (20/50, stop-loss 5%,
+capital $10,000) se leen del mismo `src/main.py` que usa el CLI — no están duplicados.
+Ver [WEBAPP.md](WEBAPP.md) para el diseño completo.
 
 Para correrla:
 
@@ -65,9 +71,33 @@ Para correrla:
 
 Y abrir `http://127.0.0.1:8000` en el navegador.
 
+Símbolos disponibles (`webapp/symbols.py`): BTC/USDT, ETH/USDT, BNB/USDT, SOL/USDT,
+XRP/USDT, DOGE/USDT, ADA/USDT, TRX/USDT, AVAX/USDT, TON/USDT, LINK/USDT, DOT/USDT,
+POL/USDT, LTC/USDT. (`MATIC/USDT` se reemplazó por `POL/USDT` porque Binance deslistó
+el par MATIC.)
+
+## Pendientes / cosas menores sin resolver
+
+Ninguna bloqueante — el sistema funciona end-to-end y pasa sus 20 tests. Quedó
+pendiente por decisión explícita (no se itera dos veces sobre el mismo hallazgo):
+
+- **Nadie ha visto la interfaz web en un navegador real.** Este entorno no tiene
+  herramientas de navegador, así que toda la verificación fue por código y `curl`. Abre
+  `http://127.0.0.1:8000`, prueba un par de símbolos (incluyendo uno con pocas
+  operaciones) y confirma que las gráficas se ven bien y el texto se lee con claridad.
+- Ventanas de medias móviles, stop-loss y capital inicial siguen fijos — configurarlos
+  desde la web es el siguiente paso natural si se quiere iterar sobre la estrategia.
+- Un guard nuevo rechaza símbolos con muy pocas velas (<50), pero no se revisaron los
+  otros 13 símbolos uno por uno para confirmar que todos tienen suficiente historial en
+  Binance — probablemente sí, pero no se verificó exhaustivamente.
+- Varios detalles cosméticos quedaron anotados en los mensajes de commit de la rama
+  `sdd/webapp-v1` (ya fusionada a `master`) — nada que afecte resultados o funcionalidad.
+
 ## Próximos pasos
 
 - [x] Escribir plan de implementación (script de datos, motor de backtest, estrategia,
       reporte)
 - [x] Implementar y correr primer backtest BTC/USDT y ETH/USDT
+- [x] Construir interfaz web (backend FastAPI + frontend delegado a agente de diseño UI)
+- [ ] Abrir la interfaz web en un navegador real y confirmar que se ve bien
 - [ ] Revisar resultados con el usuario y decidir siguientes estrategias a probar
