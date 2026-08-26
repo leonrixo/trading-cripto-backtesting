@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script defer crossorigin="anonymous" src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -40,11 +40,11 @@
       </div>
     </div>
 
-    <dl class="params" aria-label="Parámetros fijos de la estrategia">
-      <div class="params__item"><dt>MA rápida</dt><dd>20</dd></div>
-      <div class="params__item"><dt>MA lenta</dt><dd>50</dd></div>
-      <div class="params__item"><dt>Stop-loss</dt><dd>5%</dd></div>
-      <div class="params__item"><dt>Capital</dt><dd>$10,000</dd></div>
+    <dl class="params" aria-label="Parámetros de la estrategia (de la última corrida)">
+      <div class="params__item"><dt>MA rápida</dt><dd id="param-fast">—</dd></div>
+      <div class="params__item"><dt>MA lenta</dt><dd id="param-slow">—</dd></div>
+      <div class="params__item"><dt>Stop-loss</dt><dd id="param-stop">—</dd></div>
+      <div class="params__item"><dt>Capital</dt><dd id="param-capital">—</dd></div>
     </dl>
   </header>
 
@@ -69,7 +69,8 @@
     </button>
 
     <p class="console__hint" id="console-hint">
-      Se descargan ~730 días de velas diarias en cada corrida — tarda unos segundos.
+      La primera corrida de cada símbolo descarga ~730 días de velas; las siguientes
+      usan datos ya guardados localmente.
     </p>
   </section>
 
@@ -106,12 +107,12 @@
   </section>
 
   <!-- ───────────────────────── Estado: cargando ───────────────────────── -->
-  <section id="loading" class="loading" hidden aria-live="polite">
+  <section id="loading" class="loading" hidden>
     <div class="loading__head">
       <span class="loading__pulse" aria-hidden="true"></span>
-      <p>
+      <p aria-live="polite">
         Corriendo backtest de <strong id="loading-symbol">—</strong>
-        <span class="loading__timer" id="loading-timer">0.0s</span>
+        <span class="loading__timer" id="loading-timer" aria-hidden="true">0.0s</span>
       </p>
     </div>
     <div class="skeleton-metrics" aria-hidden="true">

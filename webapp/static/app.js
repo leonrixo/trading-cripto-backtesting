@@ -54,6 +54,10 @@
   var elTradesCount  = $("trades-count");
   var elChartPrice   = $("chart-price");
   var elChartEquity  = $("chart-equity");
+  var elParamFast    = $("param-fast");
+  var elParamSlow    = $("param-slow");
+  var elParamStop    = $("param-stop");
+  var elParamCapital = $("param-capital");
 
   var METRIC_NODES = {
     total_return: $("m-total-return"),
@@ -151,6 +155,14 @@
       node.textContent = "—";
       node.className = "metric__value";
     });
+    resetParams();
+  }
+
+  function resetParams() {
+    elParamFast.textContent = "—";
+    elParamSlow.textContent = "—";
+    elParamStop.textContent = "—";
+    elParamCapital.textContent = "—";
   }
 
   function startTimer() {
@@ -290,6 +302,7 @@
     hideError();
     elEmpty.hidden = true;
 
+    renderParams(data.params || {});
     renderHeader(data);
     renderMetrics(data.metrics || {});
     renderTrades(data.trades || []);
@@ -300,6 +313,16 @@
     renderPriceChart(data);
     renderEquityChart(data);
     chartsDrawn = true;
+  }
+
+  /* Los chips del header vienen hardcodeados en el HTML hasta la primera corrida
+     exitosa; a partir de ahí reflejan lo que el backend realmente usó, no un
+     literal que podría desincronizarse de src/main.py. */
+  function renderParams(p) {
+    elParamFast.textContent    = isNum(p.fast_window)    ? String(p.fast_window) : "—";
+    elParamSlow.textContent    = isNum(p.slow_window)    ? String(p.slow_window) : "—";
+    elParamStop.textContent    = isNum(p.stop_loss_pct)  ? fmtPct(p.stop_loss_pct, 0) : "—";
+    elParamCapital.textContent = isNum(p.initial_capital) ? fmtMoney(p.initial_capital) : "—";
   }
 
   function renderHeader(data) {
@@ -459,6 +482,9 @@
   function renderPriceChart(data) {
     var dates = data.dates || [];
     var trades = data.trades || [];
+    var params = data.params || {};
+    var fastName = "MA " + (isNum(params.fast_window) ? params.fast_window : "?");
+    var slowName = "MA " + (isNum(params.slow_window) ? params.slow_window : "?");
 
     var traces = [
       {
@@ -474,22 +500,22 @@
       {
         type: "scatter",
         mode: "lines",
-        name: "MA 20",
+        name: fastName,
         x: dates,
         y: data.fast_ma || [],
         line: { color: C.fastMa, width: 1.8 },
         connectgaps: false,
-        hovertemplate: "%{y:,.6~f}<extra>MA 20</extra>"
+        hovertemplate: "%{y:,.6~f}<extra>" + fastName + "</extra>"
       },
       {
         type: "scatter",
         mode: "lines",
-        name: "MA 50",
+        name: slowName,
         x: dates,
         y: data.slow_ma || [],
         line: { color: C.slowMa, width: 1.8 },
         connectgaps: false,
-        hovertemplate: "%{y:,.6~f}<extra>MA 50</extra>"
+        hovertemplate: "%{y:,.6~f}<extra>" + slowName + "</extra>"
       }
     ];
 
