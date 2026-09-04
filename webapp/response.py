@@ -42,7 +42,7 @@ def build_response(symbol: str, df, result: dict, metrics: dict, params: dict) -
 
     metrics_out = {k: (v if k == "num_trades" else _sanitize(v)) for k, v in metrics.items()}
 
-    return {
+    out = {
         "symbol": symbol,
         "dates": dates,
         "close": close,
@@ -53,3 +53,8 @@ def build_response(symbol: str, df, result: dict, metrics: dict, params: dict) -
         "metrics": metrics_out,
         "params": params,
     }
+    if "rsi" in df.columns:
+        out["rsi"] = [_sanitize(v) for v in df["rsi"]]
+
+    return out
+

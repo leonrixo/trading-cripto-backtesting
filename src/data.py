@@ -30,7 +30,8 @@ def fetch_ohlcv(
         return pd.read_csv(cache_path, index_col=0, parse_dates=True)
 
     exchange = getattr(ccxt, exchange_id)()
-    since_ms = exchange.milliseconds() - since_days * 24 * 60 * 60 * 1000
+    effective_days = min(since_days, 40) if timeframe == "1h" and since_days == 730 else since_days
+    since_ms = exchange.milliseconds() - effective_days * 24 * 60 * 60 * 1000
 
     if fetch_fn is None:
         fetch_fn = lambda ex, sym, tf, since, limit: ex.fetch_ohlcv(sym, tf, since=since, limit=limit)
@@ -40,12 +41,19 @@ def fetch_ohlcv(
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     df = df.set_index("timestamp")
 
-    # La última vela puede seguir en formación (el día actual UTC todavía no
-    # cierra); si se cachea/usa tal cual, run_backtest la trataría como una
-    # barra cerrada. La descartamos antes de escribir el cache.
-    today_utc = datetime.now(timezone.utc).date()
-    if len(df) > 0 and df.index[-1].date() == today_utc:
-        df = df.iloc[:-1]
+    # La última vela puede seguir en formación; la descartamos antes de escribir el cache.
+    now_utc = datetime.now(timezone.utc)
+    if len(df) > 0:
+        last_dt = df.index[-1]
+        if timeframe == "1d":
+            today_utc = now_utc.date()
+            if last_dt.date() == today_utc:
+                df = df.iloc[:-1]
+        elif timeframe == "1h":
+            current_hour_utc = now_utc.replace(minute=0, second=0, microsecond=0, tzinfo=None)
+            if last_dt >= current_hour_utc:
+                df = df.iloc[:-1]
 
     df.to_csv(cache_path)
     return df
+

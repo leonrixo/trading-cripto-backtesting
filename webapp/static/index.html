@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Backtester · Cruce de medias</title>
+  <title>CryptoLab · Trading &amp; Backtesting</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f1219'/%3E%3Cpath d='M5 22l6-7 5 4 4-7 7 5' fill='none' stroke='%237c6bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <script defer crossorigin="anonymous" src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script defer src="app.js"></script>
+  <script defer src="app.js?v=2"></script>
 </head>
 <body>
 
 <div class="app">
 
-  <!-- ───────────────────────── Header ───────────────────────── -->
+  <!-- ───────────────────────── Header Principal ───────────────────────── -->
   <header class="topbar">
     <div class="brand">
       <span class="brand__mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="34" height="34">
+        <svg viewBox="0 0 32 32" width="36" height="36">
           <rect width="32" height="32" rx="9" fill="url(#brandGrad)"/>
           <path d="M5 22l6-7 5 4 4-7 7 5" fill="none" stroke="#0b0d13" stroke-width="2.6"
                 stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
@@ -35,174 +35,397 @@
         </svg>
       </span>
       <div class="brand__text">
-        <h1>Backtester</h1>
-        <p>Cruce de medias móviles · velas diarias de Binance</p>
+        <h1>CryptoLab Backtester</h1>
+        <p>Simulación cuantitativa y automatización con datos reales de Binance</p>
       </div>
     </div>
 
-    <dl class="params" aria-label="Parámetros de la estrategia (de la última corrida)">
-      <div class="params__item"><dt>MA rápida</dt><dd id="param-fast">—</dd></div>
-      <div class="params__item"><dt>MA lenta</dt><dd id="param-slow">—</dd></div>
-      <div class="params__item"><dt>Stop-loss</dt><dd id="param-stop">—</dd></div>
-      <div class="params__item"><dt>Capital</dt><dd id="param-capital">—</dd></div>
-    </dl>
+    <div class="topbar__aside">
+      <span class="status-badge" title="Conexión de datos en vivo de Binance Spot">
+        <span class="status-dot"></span> Binance Spot
+      </span>
+    </div>
   </header>
 
-  <!-- ───────────────────────── Consola ───────────────────────── -->
-  <section class="console" aria-label="Configuración de la corrida">
-    <div class="field">
-      <label for="symbol">Símbolo</label>
-      <div class="select-wrap">
-        <select id="symbol" aria-describedby="console-hint">
-          <option value="">Cargando símbolos…</option>
-        </select>
-        <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor"
-                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+  <!-- ───────────────────────── Sistema de Pestañas ───────────────────────── -->
+  <nav class="tabs-nav" role="tablist" aria-label="Estrategias de trading cuantitativo">
+    <button id="tab-btn-bt" class="tab-btn is-active" role="tab" aria-selected="true" aria-controls="panel-bt" tabindex="0">
+      <span class="tab-btn__icon" aria-hidden="true">📊</span>
+      <span class="tab-btn__title">Backtesting (Scalping &amp; Tendencia)</span>
+    </button>
+    <button id="tab-btn-grid" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-grid" tabindex="-1">
+      <span class="tab-btn__icon" aria-hidden="true">🕸️</span>
+      <span class="tab-btn__title">Goteo de Ingresos (Bot de Malla / Grid)</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: BACKTESTING (SCALPING & TENDENCIA)                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="panel-bt" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-bt">
+
+    <!-- Consola Backtesting -->
+    <div class="console" aria-label="Configuración de corrida de backtesting">
+      <div class="field">
+        <label for="bt-symbol">Símbolo</label>
+        <div class="select-wrap">
+          <select id="bt-symbol" aria-describedby="bt-console-hint">
+            <option value="">Cargando símbolos…</option>
+          </select>
+          <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
       </div>
-    </div>
 
-    <button id="run" class="btn" type="button">
-      <span class="btn__spinner" aria-hidden="true"></span>
-      <span class="btn__label">Correr backtest</span>
-    </button>
+      <div class="field">
+        <label for="bt-strategy">Estrategia</label>
+        <div class="select-wrap">
+          <select id="bt-strategy">
+            <option value="scalping_1h" selected>⚡ Scalping 1h (RSI + Medias)</option>
+            <option value="ma">📈 Cruce Diario (20/50)</option>
+          </select>
+          <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
 
-    <p class="console__hint" id="console-hint">
-      La primera corrida de cada símbolo descarga ~730 días de velas; las siguientes
-      usan datos ya guardados localmente.
-    </p>
-  </section>
+      <button id="bt-run" class="btn" type="button">
+        <span class="btn__spinner" aria-hidden="true"></span>
+        <span class="btn__label">Correr backtest</span>
+      </button>
 
-  <!-- ───────────────────────── Banner de error ───────────────────────── -->
-  <div id="error" class="banner" role="alert" hidden>
-    <svg class="banner__icon" viewBox="0 0 20 20" aria-hidden="true">
-      <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M10 5.75v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      <circle cx="10" cy="14" r="1.05" fill="currentColor"/>
-    </svg>
-    <div class="banner__body">
-      <strong>No se pudo correr el backtest</strong>
-      <span id="error-message"></span>
-    </div>
-    <button id="error-dismiss" class="banner__close" type="button" aria-label="Cerrar aviso de error">
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
-
-  <!-- ───────────────────────── Estado: vacío ───────────────────────── -->
-  <section id="empty" class="empty">
-    <svg class="empty__art" viewBox="0 0 220 90" aria-hidden="true">
-      <path d="M4 76 L28 58 L52 66 L76 38 L100 48 L124 22 L148 34 L172 16 L196 26 L216 10"
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" opacity=".55"/>
-      <path d="M4 84 L28 78 L52 74 L76 70 L100 62 L124 58 L148 50 L172 44 L196 38 L216 30"
-            fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 6"
-            stroke-linecap="round" opacity=".3"/>
-    </svg>
-    <h2>Todavía no hay resultados</h2>
-    <p>Elige un símbolo y corre el backtest para ver métricas y gráficas.</p>
-  </section>
-
-  <!-- ───────────────────────── Estado: cargando ───────────────────────── -->
-  <section id="loading" class="loading" hidden>
-    <div class="loading__head">
-      <span class="loading__pulse" aria-hidden="true"></span>
-      <p aria-live="polite">
-        Corriendo backtest de <strong id="loading-symbol">—</strong>
-        <span class="loading__timer" id="loading-timer" aria-hidden="true">0.0s</span>
+      <p class="console__hint" id="bt-console-hint">
+        Prueba estrategias direccionales de Scalping 1h o Tendencia Diaria con gestión de stop-loss automático.
       </p>
     </div>
-    <div class="skeleton-metrics" aria-hidden="true">
-      <div class="skeleton skeleton--card"></div>
-      <div class="skeleton skeleton--card"></div>
-      <div class="skeleton skeleton--card"></div>
-      <div class="skeleton skeleton--card"></div>
-      <div class="skeleton skeleton--card"></div>
+
+    <!-- Banner de error Backtesting -->
+    <div id="bt-error" class="banner" role="alert" hidden>
+      <svg class="banner__icon" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10 5.75v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="10" cy="14" r="1.05" fill="currentColor"/>
+      </svg>
+      <div class="banner__body">
+        <strong>Error en backtest</strong>
+        <span id="bt-error-message"></span>
+      </div>
+      <button id="bt-error-dismiss" class="banner__close" type="button" aria-label="Cerrar aviso de error">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
-    <div class="skeleton skeleton--chart" aria-hidden="true"></div>
+
+    <!-- Estado: Vacío Backtesting -->
+    <div id="bt-empty" class="empty">
+      <svg class="empty__art" viewBox="0 0 220 90" aria-hidden="true">
+        <path d="M4 76 L28 58 L52 66 L76 38 L100 48 L124 22 L148 34 L172 16 L196 26 L216 10"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+        <path d="M4 84 L28 78 L52 74 L76 70 L100 62 L124 58 L148 50 L172 44 L196 38 L216 30"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round" opacity=".3"/>
+      </svg>
+      <h2>Sin resultados de backtesting</h2>
+      <p>Selecciona un símbolo y ejecuta el backtest para analizar el comportamiento histórico de la estrategia.</p>
+    </div>
+
+    <!-- Estado: Cargando Backtesting -->
+    <div id="bt-loading" class="loading" hidden>
+      <div class="loading__head">
+        <span class="loading__pulse" aria-hidden="true"></span>
+        <p aria-live="polite">
+          Corriendo backtest de <strong id="bt-loading-symbol">—</strong>
+          <span class="loading__timer" id="bt-loading-timer" aria-hidden="true">0.0s</span>
+        </p>
+      </div>
+      <div class="skeleton-metrics" aria-hidden="true">
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+      </div>
+      <div class="skeleton skeleton--chart" aria-hidden="true"></div>
+    </div>
+
+    <!-- Resultados Backtesting -->
+    <div id="bt-results" class="results" hidden>
+      <div class="results__head">
+        <div class="results__title-group">
+          <h2 id="bt-results-symbol">—</h2>
+          <p id="bt-results-meta" class="results__meta">—</p>
+        </div>
+        <dl id="bt-params" class="params" aria-label="Parámetros de la corrida"></dl>
+      </div>
+
+      <!-- Métricas Backtesting -->
+      <section class="metrics" aria-label="Métricas del backtest">
+        <article class="metric">
+          <h3>Retorno Total</h3>
+          <p class="metric__value" id="bt-m-total-return">—</p>
+          <p class="metric__note">Sobre el capital inicial</p>
+        </article>
+        <article class="metric">
+          <h3>Win Rate</h3>
+          <p class="metric__value" id="bt-m-win-rate">—</p>
+          <p class="metric__note">Operaciones ganadoras</p>
+        </article>
+        <article class="metric">
+          <h3>Max Drawdown</h3>
+          <p class="metric__value" id="bt-m-max-drawdown">—</p>
+          <p class="metric__note">Caída máxima desde un pico</p>
+        </article>
+        <article class="metric">
+          <h3>Sharpe Ratio</h3>
+          <p class="metric__value" id="bt-m-sharpe">—</p>
+          <p class="metric__note">Retorno ajustado por riesgo</p>
+        </article>
+        <article class="metric">
+          <h3>Total Trades</h3>
+          <p class="metric__value" id="bt-m-num-trades">—</p>
+          <p class="metric__note">Ciclos de entrada y salida</p>
+        </article>
+      </section>
+
+      <!-- Gráfico Precio + Medias Móviles + Señales -->
+      <figure class="panel">
+        <figcaption class="panel__head">
+          <div>
+            <h3>Precio y Medias Móviles</h3>
+            <p>Señales de entrada y salida calculadas a partir de operaciones ejecutadas</p>
+          </div>
+          <div class="legend-badges">
+            <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> Entrada</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Salida Señal</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#fb7185"></span> Salida Stop-Loss</span>
+          </div>
+        </figcaption>
+        <div id="bt-chart-price" class="panel__chart"></div>
+      </figure>
+
+      <!-- Gráfico Equity -->
+      <figure class="panel">
+        <figcaption class="panel__head">
+          <h3>Curva de Equity</h3>
+          <p>Evolución acumulada del valor de la cuenta a lo largo del periodo</p>
+        </figcaption>
+        <div id="bt-chart-equity" class="panel__chart panel__chart--short"></div>
+      </figure>
+
+      <!-- Tabla de Operaciones -->
+      <section class="panel">
+        <div class="panel__head">
+          <h3>Tabla de Operaciones</h3>
+          <p id="bt-trades-count">—</p>
+        </div>
+        <div class="table-wrap">
+          <table class="trades">
+            <thead>
+              <tr>
+                <th scope="col">Entrada</th>
+                <th scope="col">Salida</th>
+                <th scope="col" class="num">Precio Entrada</th>
+                <th scope="col" class="num">Precio Salida</th>
+                <th scope="col" class="num">P&amp;L</th>
+                <th scope="col">Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="bt-trades-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
   </section>
 
-  <!-- ───────────────────────── Resultados ───────────────────────── -->
-  <main id="results" class="results" hidden>
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: GOTEO DE INGRESOS (BOT DE MALLA / GRID)                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="panel-grid" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-grid" hidden>
 
-    <div class="results__head">
-      <h2 id="results-symbol">—</h2>
-      <p id="results-meta" class="results__meta">—</p>
+    <!-- Consola Malla -->
+    <div class="console" aria-label="Configuración del bot de malla">
+      <div class="field">
+        <label for="grid-symbol">Símbolo</label>
+        <div class="select-wrap">
+          <select id="grid-symbol" aria-describedby="grid-console-hint">
+            <option value="">Cargando símbolos…</option>
+          </select>
+          <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="field field--num">
+        <label for="grid-num">Nº Rejillas</label>
+        <input type="number" id="grid-num" value="10" min="3" max="50" class="input-text">
+      </div>
+
+      <div class="field field--price">
+        <label for="grid-lower">Rango Inferior (USDT)</label>
+        <input type="number" id="grid-lower" placeholder="Auto" step="any" class="input-text">
+      </div>
+
+      <div class="field field--price">
+        <label for="grid-upper">Rango Superior (USDT)</label>
+        <input type="number" id="grid-upper" placeholder="Auto" step="any" class="input-text">
+      </div>
+
+      <button id="grid-run" class="btn btn--grid" type="button">
+        <span class="btn__spinner" aria-hidden="true"></span>
+        <span class="btn__label">Simular Malla</span>
+      </button>
+
+      <p class="console__hint" id="grid-console-hint">
+        Aprovecha la oscilación lateral dividiendo el capital en rejillas automáticas para generar micro-ganancias constantes.
+      </p>
     </div>
 
-    <section class="metrics" aria-label="Métricas del backtest">
-      <article class="metric">
-        <h3>Retorno total</h3>
-        <p class="metric__value" id="m-total-return">—</p>
-        <p class="metric__note">Sobre el capital inicial</p>
-      </article>
-      <article class="metric">
-        <h3>Win rate</h3>
-        <p class="metric__value" id="m-win-rate">—</p>
-        <p class="metric__note">Operaciones ganadoras</p>
-      </article>
-      <article class="metric">
-        <h3>Max drawdown</h3>
-        <p class="metric__value" id="m-max-drawdown">—</p>
-        <p class="metric__note">Caída máxima desde un pico</p>
-      </article>
-      <article class="metric">
-        <h3>Sharpe</h3>
-        <p class="metric__value" id="m-sharpe">—</p>
-        <p class="metric__note">Retorno ajustado por riesgo</p>
-      </article>
-      <article class="metric">
-        <h3>Operaciones</h3>
-        <p class="metric__value" id="m-num-trades">—</p>
-        <p class="metric__note">Ciclos de entrada y salida</p>
-      </article>
-    </section>
-
-    <figure class="panel">
-      <figcaption class="panel__head">
-        <h3>Precio y medias móviles</h3>
-        <p>Entradas y salidas derivadas de las operaciones ejecutadas</p>
-      </figcaption>
-      <div id="chart-price" class="panel__chart"></div>
-    </figure>
-
-    <figure class="panel">
-      <figcaption class="panel__head">
-        <h3>Curva de equity</h3>
-        <p>Valor de la cuenta a lo largo del periodo</p>
-      </figcaption>
-      <div id="chart-equity" class="panel__chart panel__chart--short"></div>
-    </figure>
-
-    <section class="panel">
-      <div class="panel__head">
-        <h3>Operaciones</h3>
-        <p id="trades-count">—</p>
+    <!-- Banner de error Malla -->
+    <div id="grid-error" class="banner" role="alert" hidden>
+      <svg class="banner__icon" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10 5.75v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="10" cy="14" r="1.05" fill="currentColor"/>
+      </svg>
+      <div class="banner__body">
+        <strong>Error en simulación de malla</strong>
+        <span id="grid-error-message"></span>
       </div>
-      <div class="table-wrap">
-        <table class="trades">
-          <thead>
-            <tr>
-              <th scope="col">Entrada</th>
-              <th scope="col">Salida</th>
-              <th scope="col" class="num">Precio entrada</th>
-              <th scope="col" class="num">Precio salida</th>
-              <th scope="col" class="num">P&amp;L</th>
-              <th scope="col">Motivo</th>
-            </tr>
-          </thead>
-          <tbody id="trades-body"></tbody>
-        </table>
+      <button id="grid-error-dismiss" class="banner__close" type="button" aria-label="Cerrar aviso de error">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Estado: Vacío Malla -->
+    <div id="grid-empty" class="empty">
+      <svg class="empty__art" viewBox="0 0 220 90" aria-hidden="true">
+        <line x1="10" y1="20" x2="210" y2="20" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".35"/>
+        <line x1="10" y1="36" x2="210" y2="36" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".35"/>
+        <line x1="10" y1="52" x2="210" y2="52" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".35"/>
+        <line x1="10" y1="68" x2="210" y2="68" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".35"/>
+        <path d="M15 65 L45 38 L80 50 L115 22 L150 53 L185 35 L205 48" fill="none" stroke="var(--pos)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>Sin simulación de Malla / Grid</h2>
+      <p>Configura las rejillas y rangos de precio para evaluar el rendimiento del goteo continuo de beneficios.</p>
+    </div>
+
+    <!-- Estado: Cargando Malla -->
+    <div id="grid-loading" class="loading" hidden>
+      <div class="loading__head">
+        <span class="loading__pulse" aria-hidden="true"></span>
+        <p aria-live="polite">
+          Simulando bot de malla para <strong id="grid-loading-symbol">—</strong>
+          <span class="loading__timer" id="grid-loading-timer" aria-hidden="true">0.0s</span>
+        </p>
       </div>
-    </section>
+      <div class="skeleton-metrics" aria-hidden="true">
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+        <div class="skeleton skeleton--card"></div>
+      </div>
+      <div class="skeleton skeleton--chart" aria-hidden="true"></div>
+    </div>
 
-  </main>
+    <!-- Resultados Malla -->
+    <div id="grid-results" class="results" hidden>
+      <div class="results__head">
+        <div class="results__title-group">
+          <h2 id="grid-results-symbol">—</h2>
+          <p id="grid-results-meta" class="results__meta">—</p>
+        </div>
+        <dl id="grid-params" class="params" aria-label="Parámetros de la malla ejecutada"></dl>
+      </div>
 
+      <!-- Métricas de Goteo Adaptadas -->
+      <section class="metrics" aria-label="Métricas del bot de malla">
+        <article class="metric metric--highlight">
+          <h3>Ganancia por Goteo</h3>
+          <p class="metric__value is-pos" id="grid-m-realized">—</p>
+          <p class="metric__note">Beneficio realizado en USDT</p>
+        </article>
+        <article class="metric">
+          <h3>Retorno Total</h3>
+          <p class="metric__value" id="grid-m-total-return">—</p>
+          <p class="metric__note">Sobre capital asignado</p>
+        </article>
+        <article class="metric">
+          <h3>Compras en Malla</h3>
+          <p class="metric__value" id="grid-m-buys">—</p>
+          <p class="metric__note">Órdenes de compra ejecutadas</p>
+        </article>
+        <article class="metric">
+          <h3>Ventas con Beneficio</h3>
+          <p class="metric__value" id="grid-m-sells">—</p>
+          <p class="metric__note">Órdenes cerradas con ganancia</p>
+        </article>
+        <article class="metric">
+          <h3>Estado del Rango</h3>
+          <p class="metric__value" id="grid-m-status">—</p>
+          <p class="metric__note" id="grid-m-status-note">Posición actual vs rejilla</p>
+        </article>
+      </section>
+
+      <!-- Gráfico Precio con Rejillas Horizontales y Marcadores -->
+      <figure class="panel">
+        <figcaption class="panel__head">
+          <div>
+            <h3>Niveles de Rejilla y Ejecuciones</h3>
+            <p>Líneas horizontales por cada nivel de rejilla con órdenes de compra y venta de malla</p>
+          </div>
+          <div class="legend-badges">
+            <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> Compra Malla</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#38bdf8"></span> Venta Beneficio</span>
+            <span class="legend-item"><span class="legend-line" style="border-top:1px dashed #7c6bff"></span> Rejilla</span>
+          </div>
+        </figcaption>
+        <div id="grid-chart-price" class="panel__chart"></div>
+      </figure>
+
+      <!-- Gráfico Evolución del Capital -->
+      <figure class="panel">
+        <figcaption class="panel__head">
+          <h3>Evolución del Capital (Equity)</h3>
+          <p>Crecimiento progresivo del capital impulsado por el goteo de ganancias realizadas</p>
+        </figcaption>
+        <div id="grid-chart-equity" class="panel__chart panel__chart--short"></div>
+      </figure>
+
+      <!-- Tabla de Micro-Operaciones de la Malla -->
+      <section class="panel">
+        <div class="panel__head">
+          <h3>Micro-Operaciones de la Malla</h3>
+          <p id="grid-trades-count">—</p>
+        </div>
+        <div class="table-wrap">
+          <table class="trades">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Tipo</th>
+                <th scope="col" class="num">Precio</th>
+                <th scope="col" class="num">Cantidad</th>
+                <th scope="col" class="num">Beneficio</th>
+              </tr>
+            </thead>
+            <tbody id="grid-trades-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </section>
+
+  <!-- ───────────────────────── Pie ───────────────────────── -->
   <footer class="foot">
-    <span>App local · sin build step · Plotly.js vía CDN</span>
+    <span>CryptoLab Webapp · Binance Spot Data · Plotly.js · Modo Oscuro Profesional</span>
   </footer>
 
 </div>
