@@ -8,3 +8,5 @@ reports/*.txt
 .worktrees/
 .superpowers/
 .impeccable/
+memory/
+

@@ -10,9 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
   <script defer crossorigin="anonymous" src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script defer src="app.js?v=2"></script>
+  <script defer src="app.js?v=3"></script>
 </head>
 <body>
 
@@ -35,27 +35,37 @@
         </svg>
       </span>
       <div class="brand__text">
-        <h1>CryptoLab Backtester</h1>
-        <p>Simulación cuantitativa y automatización con datos reales de Binance</p>
+        <h1>CryptoLab Trading &amp; Bots</h1>
+        <p>Simulación cuantitativa y trading automatizado multi-moneda con Binance Testnet</p>
       </div>
     </div>
 
     <div class="topbar__aside">
-      <span class="status-badge" title="Conexión de datos en vivo de Binance Spot">
-        <span class="status-dot"></span> Binance Spot
+      <div id="topbar-balance" class="balance-chips" title="Saldos en Binance Testnet">
+        <span class="chip chip--usdt" id="chip-usdt"><span class="chip__dot"></span> USDT: cargando…</span>
+        <span class="chip" id="chip-sol">SOL: —</span>
+        <span class="chip" id="chip-btc">BTC: —</span>
+      </div>
+      <span class="status-badge status-badge--testnet" title="Conexión en vivo con Binance Spot Testnet">
+        <span class="status-dot"></span> Binance Testnet
       </span>
     </div>
   </header>
 
   <!-- ───────────────────────── Sistema de Pestañas ───────────────────────── -->
-  <nav class="tabs-nav" role="tablist" aria-label="Estrategias de trading cuantitativo">
+  <nav class="tabs-nav" role="tablist" aria-label="Estrategias de trading y bots en vivo">
     <button id="tab-btn-bt" class="tab-btn is-active" role="tab" aria-selected="true" aria-controls="panel-bt" tabindex="0">
       <span class="tab-btn__icon" aria-hidden="true">📊</span>
-      <span class="tab-btn__title">Backtesting (Scalping &amp; Tendencia)</span>
+      <span class="tab-btn__title">Scalping 1h (RSI + Medias)</span>
     </button>
     <button id="tab-btn-grid" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-grid" tabindex="-1">
       <span class="tab-btn__icon" aria-hidden="true">🕸️</span>
-      <span class="tab-btn__title">Goteo de Ingresos (Bot de Malla / Grid)</span>
+      <span class="tab-btn__title">Goteo de Ingresos (Bot de Malla)</span>
+    </button>
+    <button id="tab-btn-live" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-live" tabindex="-1">
+      <span class="tab-btn__icon" aria-hidden="true">🤖</span>
+      <span class="tab-btn__title">Bots en Vivo &amp; Registro</span>
+      <span id="live-tab-badge" class="badge-count" title="Bots en ejecución">0</span>
     </button>
   </nav>
 
@@ -100,6 +110,63 @@
         Prueba estrategias direccionales de Scalping 1h o Tendencia Diaria con gestión de stop-loss automático.
       </p>
     </div>
+
+    <!-- Simulador de Capital y Lanzador Scalping 1h en Vivo -->
+    <div class="capital-box" aria-label="Simulador de capital y ejecución para Scalping 1h">
+      <div class="capital-box__head">
+        <div class="capital-box__title">
+          <span class="capital-box__icon" aria-hidden="true">💡</span>
+          <div>
+            <h3>Simulador de Capital &amp; Bot Scalping 1h</h3>
+            <p>Calcula el riesgo de tu inversión y lanza un bot autónomo con velas de 1 hora en Binance Testnet.</p>
+          </div>
+        </div>
+        <div class="capital-presets" role="group" aria-label="Presets de capital para Scalping">
+          <span class="capital-presets__label">Inversión:</span>
+          <button type="button" class="preset-btn" data-panel="bt" data-val="10">$10</button>
+          <button type="button" class="preset-btn" data-panel="bt" data-val="50">$50</button>
+          <button type="button" class="preset-btn is-active" data-panel="bt" data-val="100">$100</button>
+          <button type="button" class="preset-btn" data-panel="bt" data-val="500">$500</button>
+          <button type="button" class="preset-btn" data-panel="bt" data-val="1000">$1,000</button>
+        </div>
+      </div>
+
+      <div class="capital-box__body">
+        <div class="capital-inputs">
+          <div class="field field--cap">
+            <label for="bt-cap-input">Capital a Invertir (USDT)</label>
+            <input type="number" id="bt-cap-input" value="100" min="10" step="10" class="input-text">
+          </div>
+          <button id="bt-launch-btn" class="btn btn--launch" type="button">
+            <span class="btn__spinner" aria-hidden="true"></span>
+            <span class="btn__icon">🚀</span>
+            <span class="btn__label">Lanzar Bot Scalping en Vivo</span>
+          </button>
+        </div>
+
+        <div class="capital-breakdown" id="bt-cap-breakdown">
+          <div class="calc-item">
+            <span class="calc-item__label">Capital Asignado</span>
+            <span class="calc-item__val" id="bt-calc-cap">$100.00 USDT</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-item__label">Riesgo Stop-Loss (2%)</span>
+            <span class="calc-item__val is-neg" id="bt-calc-sl">-$2.00 USDT</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-item__label">Objetivo Ganancia / Ciclo</span>
+            <span class="calc-item__val is-pos" id="bt-calc-tp">+$3.50 ~ +$8.00 USDT</span>
+          </div>
+          <div class="calc-item calc-item--status">
+            <span class="calc-item__label">Validación Binance Spot</span>
+            <span class="calc-item__val is-pos" id="bt-calc-valid">✅ Cumple mínimo ($5+ USD)</span>
+          </div>
+        </div>
+
+        <div id="bt-launch-feedback" class="launch-feedback" hidden></div>
+      </div>
+    </div>
+
 
     <!-- Banner de error Backtesting -->
     <div id="bt-error" class="banner" role="alert" hidden>
@@ -284,6 +351,64 @@
       </p>
     </div>
 
+    <!-- Simulador de Capital y Lanzador Bot de Malla en Vivo -->
+    <div class="capital-box capital-box--grid" aria-label="Simulador de capital y ejecución para Bot de Malla">
+      <div class="capital-box__head">
+        <div class="capital-box__title">
+          <span class="capital-box__icon" aria-hidden="true">💡</span>
+          <div>
+            <h3>Simulador de Capital &amp; Bot de Malla (Grid)</h3>
+            <p>Calcula el capital por nivel de rejilla y activa un bot de compras/ventas automáticas en Binance Testnet.</p>
+          </div>
+        </div>
+        <div class="capital-presets" role="group" aria-label="Presets de capital para Malla">
+          <span class="capital-presets__label">Inversión:</span>
+          <button type="button" class="preset-btn" data-panel="grid" data-val="10">$10</button>
+          <button type="button" class="preset-btn" data-panel="grid" data-val="50">$50</button>
+          <button type="button" class="preset-btn is-active" data-panel="grid" data-val="100">$100</button>
+          <button type="button" class="preset-btn" data-panel="grid" data-val="500">$500</button>
+          <button type="button" class="preset-btn" data-panel="grid" data-val="1000">$1,000</button>
+        </div>
+      </div>
+
+      <div class="capital-box__body">
+        <div class="capital-inputs">
+          <div class="field field--cap">
+            <label for="grid-cap-input">Capital a Invertir (USDT)</label>
+            <input type="number" id="grid-cap-input" value="100" min="10" step="10" class="input-text">
+          </div>
+          <button id="grid-launch-btn" class="btn btn--launch-grid" type="button">
+            <span class="btn__spinner" aria-hidden="true"></span>
+            <span class="btn__icon">🚀</span>
+            <span class="btn__label">Lanzar Bot de Malla en Vivo</span>
+          </button>
+        </div>
+
+        <div class="capital-breakdown" id="grid-cap-breakdown">
+          <div class="calc-item">
+            <span class="calc-item__label">Capital Total</span>
+            <span class="calc-item__val" id="grid-calc-cap">$100.00 USDT</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-item__label">Capital por Rejilla</span>
+            <span class="calc-item__val" id="grid-calc-per-grid">$10.00 USDT</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-item__label">Goteo Est. por Rebote</span>
+            <span class="calc-item__val is-pos" id="grid-calc-drip">~+$0.10 USDT (+1.0%)</span>
+          </div>
+          <div class="calc-item calc-item--status">
+            <span class="calc-item__label">Validación Binance Spot</span>
+            <span class="calc-item__val is-pos" id="grid-calc-valid">✅ Cumple mínimo ($5+ USD/orden)</span>
+          </div>
+        </div>
+
+        <div id="grid-cap-alert" class="cap-alert" hidden></div>
+        <div id="grid-launch-feedback" class="launch-feedback" hidden></div>
+      </div>
+    </div>
+
+
     <!-- Banner de error Malla -->
     <div id="grid-error" class="banner" role="alert" hidden>
       <svg class="banner__icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -423,9 +548,156 @@
 
   </section>
 
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: BOTS EN VIVO & REGISTRO PERSISTENTE (BINANCE TESTNET)           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="panel-live" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-live" hidden>
+
+    <!-- Resumen de Métricas en Vivo -->
+    <div class="live-summary-cards" aria-label="Métricas de bots en ejecución">
+      <article class="stat-card">
+        <span class="stat-card__icon" aria-hidden="true">🤖</span>
+        <div>
+          <span class="stat-card__label">Bots Activos</span>
+          <p class="stat-card__value" id="live-m-active-count">0</p>
+          <span class="stat-card__note">Hilos simultáneos en Binance</span>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-card__icon" aria-hidden="true">💰</span>
+        <div>
+          <span class="stat-card__label">Capital Asignado</span>
+          <p class="stat-card__value" id="live-m-total-capital">$0.00</p>
+          <span class="stat-card__note">Total comprometido en bots</span>
+        </div>
+      </article>
+
+      <article class="stat-card stat-card--highlight">
+        <span class="stat-card__icon" aria-hidden="true">📈</span>
+        <div>
+          <span class="stat-card__label">Beneficio Realizado</span>
+          <p class="stat-card__value is-pos" id="live-m-total-profit">+$0.00</p>
+          <span class="stat-card__note">Ganancia acumulada en USDT</span>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-card__icon" aria-hidden="true">⚡</span>
+        <div>
+          <span class="stat-card__label">Órdenes Ejecutadas</span>
+          <p class="stat-card__value" id="live-m-total-trades">0</p>
+          <span class="stat-card__note">Guardadas en SQLite hoy</span>
+        </div>
+      </article>
+    </div>
+
+    <!-- Lanzador Multi-Moneda de Bots en Vivo -->
+    <div class="console console--live" aria-label="Lanzar nuevo bot de trading en vivo">
+      <div class="field">
+        <label for="live-bot-symbol">Moneda / Símbolo</label>
+        <div class="select-wrap">
+          <select id="live-bot-symbol">
+            <option value="SOL/USDT" selected>SOL/USDT</option>
+            <option value="BTC/USDT">BTC/USDT</option>
+            <option value="ETH/USDT">ETH/USDT</option>
+            <option value="BNB/USDT">BNB/USDT</option>
+            <option value="XRP/USDT">XRP/USDT</option>
+            <option value="ADA/USDT">ADA/USDT</option>
+            <option value="DOGE/USDT">DOGE/USDT</option>
+          </select>
+          <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="live-bot-type">Estrategia</label>
+        <div class="select-wrap">
+          <select id="live-bot-type">
+            <option value="grid" selected>🕸️ Bot de Malla (Grid - Micro-Goteo)</option>
+            <option value="scalping_1h">⚡ Scalping 1h (RSI + Medias)</option>
+          </select>
+          <svg class="select-wrap__chevron" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4 6.5L8 10.5L12 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="field field--num">
+        <label for="live-bot-capital">Capital Asignado (USDT)</label>
+        <input type="number" id="live-bot-capital" value="100" min="10" step="10" class="input-text">
+      </div>
+
+      <button id="live-launch-btn" class="btn btn--launch" type="button">
+        <span class="btn__spinner" aria-hidden="true"></span>
+        <span class="btn__icon">▶️</span>
+        <span class="btn__label">Iniciar Nuevo Bot</span>
+      </button>
+
+      <p class="console__hint">
+        Ejecuta múltiples bots simultáneamente. Cada bot opera con saldo oficial de Binance Testnet y guarda cada operación en base de datos.
+      </p>
+    </div>
+
+    <!-- Lista de Bots Concurrentes -->
+    <section class="panel">
+      <div class="panel__head">
+        <div>
+          <h3>Bots en Ejecución Concurrentes</h3>
+          <p>Supervisa el estado, saldo y rentabilidad de cada bot activo en segundo plano.</p>
+        </div>
+        <button id="live-refresh-bots-btn" class="btn-ghost" type="button" title="Refrescar lista de bots">
+          🔄 Actualizar
+        </button>
+      </div>
+      <div id="live-bots-grid" class="bots-cards-grid">
+        <div class="empty empty--bots">
+          <p>Consultando bots activos…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Registro Histórico Persistente en SQLite -->
+    <section class="panel">
+      <div class="panel__head">
+        <div>
+          <h3>Registro Persistente de Operaciones (Live Trade Feed)</h3>
+          <p>Historial guardado en SQLite (<code>data/trading_records.db</code>) con persistencia total ante reinicios.</p>
+        </div>
+        <span class="db-badge" title="Almacenamiento persistente SQLite">💾 SQLite Activo</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="trades trades--live">
+          <thead>
+            <tr>
+              <th scope="col">Hora Ejecución</th>
+              <th scope="col">Bot</th>
+              <th scope="col">Símbolo</th>
+              <th scope="col">Tipo</th>
+              <th scope="col" class="num">Precio</th>
+              <th scope="col" class="num">Cantidad</th>
+              <th scope="col" class="num">Total (USDT)</th>
+              <th scope="col" class="num">Beneficio</th>
+              <th scope="col">ID Orden Binance</th>
+            </tr>
+          </thead>
+          <tbody id="live-trades-body">
+            <tr>
+              <td colspan="9" class="td-empty">Cargando registros persistentes…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </section>
+
   <!-- ───────────────────────── Pie ───────────────────────── -->
   <footer class="foot">
-    <span>CryptoLab Webapp · Binance Spot Data · Plotly.js · Modo Oscuro Profesional</span>
+    <span>CryptoLab Webapp · Binance Spot Testnet · SQLite Persistence · Plotly.js · Modo Oscuro Profesional</span>
   </footer>
 
 </div>

@@ -45,3 +45,4 @@ def test_bot_manager_max_active_limit(tmp_path):
 
     manager.stop_bot(b1["id"])
     manager.stop_bot(b2["id"])
+

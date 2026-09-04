@@ -71,3 +71,4 @@ def test_bot_database_lifecycle(tmp_path):
 
     active_bots = list_bots(status="running", db_path=db_file)
     assert len(active_bots) == 0
+

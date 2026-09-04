@@ -42,3 +42,9 @@ def test_live_bots_api_lifecycle():
     res_stop = client.post(f"/api/live/bots/{bot_id}/stop")
     assert res_stop.status_code == 200
     assert res_stop.json()["bot"]["status"] == "stopped"
+
+    # 6. Obtener feed general de trades
+    res_all_trades = client.get("/api/live/trades")
+    assert res_all_trades.status_code == 200
+    assert "trades" in res_all_trades.json()
+

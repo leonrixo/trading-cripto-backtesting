@@ -1172,46 +1172,50 @@
      ═══════════════════════════════════════════════════════════════ */
   var tabBtnBt = $("tab-btn-bt");
   var tabBtnGrid = $("tab-btn-grid");
+  var tabBtnLive = $("tab-btn-live");
   var panelBt = $("panel-bt");
   var panelGrid = $("panel-grid");
+  var panelLive = $("panel-live");
+
+  var tabsList = [tabBtnBt, tabBtnGrid, tabBtnLive];
+  var panelsMap = {
+    "tab-btn-bt": { btn: tabBtnBt, panel: panelBt },
+    "tab-btn-grid": { btn: tabBtnGrid, panel: panelGrid },
+    "tab-btn-live": { btn: tabBtnLive, panel: panelLive }
+  };
 
   function switchTab(activeTabId) {
-    var isBt = activeTabId === "tab-btn-bt";
+    Object.keys(panelsMap).forEach(function (id) {
+      var item = panelsMap[id];
+      if (!item.btn || !item.panel) return;
+      var isActive = id === activeTabId;
+      item.btn.classList.toggle("is-active", isActive);
+      item.btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      item.btn.setAttribute("tabindex", isActive ? "0" : "-1");
+      item.panel.hidden = !isActive;
+    });
 
-    // Actualizar botones de pestaña
-    tabBtnBt.classList.toggle("is-active", isBt);
-    tabBtnBt.setAttribute("aria-selected", isBt ? "true" : "false");
-    tabBtnBt.setAttribute("tabindex", isBt ? "0" : "-1");
-
-    tabBtnGrid.classList.toggle("is-active", !isBt);
-    tabBtnGrid.setAttribute("aria-selected", !isBt ? "true" : "false");
-    tabBtnGrid.setAttribute("tabindex", !isBt ? "0" : "-1");
-
-    // Actualizar paneles
-    panelBt.hidden = !isBt;
-    panelGrid.hidden = isBt;
-
-    // Redimensionar gráficos Plotly en la pestaña recién activada
     window.requestAnimationFrame(function () {
-      if (isBt) {
+      if (activeTabId === "tab-btn-bt") {
         btTab.resize();
-      } else {
+      } else if (activeTabId === "tab-btn-grid") {
         gridTab.resize();
+      } else if (activeTabId === "tab-btn-live") {
+        pollLiveData();
       }
     });
   }
 
-  tabBtnBt.addEventListener("click", function () {
-    switchTab("tab-btn-bt");
-  });
+  // Exportar para acceso desde enlaces interactivos
+  window.CryptoLab = { switchTab: switchTab };
 
-  tabBtnGrid.addEventListener("click", function () {
-    switchTab("tab-btn-grid");
-  });
+  tabBtnBt.addEventListener("click", function () { switchTab("tab-btn-bt"); });
+  tabBtnGrid.addEventListener("click", function () { switchTab("tab-btn-grid"); });
+  tabBtnLive.addEventListener("click", function () { switchTab("tab-btn-live"); });
 
-  // Navegación accesible por teclado (ArrowLeft, ArrowRight)
-  var tabsList = [tabBtnBt, tabBtnGrid];
+  // Navegación accesible por teclado (ArrowLeft, ArrowRight, Home, End)
   tabsList.forEach(function (btn, idx) {
+    if (!btn) return;
     btn.addEventListener("keydown", function (ev) {
       var targetIdx = null;
       if (ev.key === "ArrowRight") {
@@ -1233,6 +1237,416 @@
   });
 
   /* ═══════════════════════════════════════════════════════════════
+     SIMULADORES DE CAPITAL INTERACTIVOS
+     ═══════════════════════════════════════════════════════════════ */
+  function updateBtCapitalSim() {
+    var capInput = $("bt-cap-input");
+    var cap = parseFloat(capInput ? capInput.value : 100) || 100;
+    var sl = cap * 0.02;
+    var tpMin = cap * 0.035;
+    var tpMax = cap * 0.08;
+
+    var elCap = $("bt-calc-cap");
+    var elSl = $("bt-calc-sl");
+    var elTp = $("bt-calc-tp");
+    var elValid = $("bt-calc-valid");
+
+    if (elCap) elCap.textContent = "$" + cap.toFixed(2) + " USDT";
+    if (elSl) elSl.textContent = "-$" + sl.toFixed(2) + " USDT";
+    if (elTp) elTp.textContent = "+$" + tpMin.toFixed(2) + " ~ +$" + tpMax.toFixed(2) + " USDT";
+
+    if (elValid) {
+      if (cap >= 10) {
+        elValid.textContent = "✅ Cumple mínimo ($5+ USD)";
+        elValid.className = "calc-item__val is-pos";
+      } else if (cap >= 5) {
+        elValid.textContent = "⚠️ Al límite del mínimo de Binance ($5 USD)";
+        elValid.className = "calc-item__val";
+      } else {
+        elValid.textContent = "❌ Inferior al mínimo de Binance ($5 USD)";
+        elValid.className = "calc-item__val is-neg";
+      }
+    }
+  }
+
+  function updateGridCapitalSim() {
+    var capInput = $("grid-cap-input");
+    var numInput = $("grid-num");
+    var cap = parseFloat(capInput ? capInput.value : 100) || 100;
+    var num = parseInt(numInput ? numInput.value : 10, 10) || 10;
+    if (num < 1) num = 1;
+    var perGrid = cap / num;
+    var dripEst = perGrid * 0.01;
+
+    var elCap = $("grid-calc-cap");
+    var elPerGrid = $("grid-calc-per-grid");
+    var elDrip = $("grid-calc-drip");
+    var elValid = $("grid-calc-valid");
+    var alertBox = $("grid-cap-alert");
+
+    if (elCap) elCap.textContent = "$" + cap.toFixed(2) + " USDT";
+    if (elPerGrid) elPerGrid.textContent = "$" + perGrid.toFixed(2) + " USDT";
+    if (elDrip) elDrip.textContent = "~+$" + dripEst.toFixed(2) + " USDT (+1.0%)";
+
+    if (perGrid >= 5) {
+      if (elValid) {
+        elValid.textContent = "✅ Cumple mínimo ($5+ USD/orden)";
+        elValid.className = "calc-item__val is-pos";
+      }
+      if (alertBox) {
+        alertBox.hidden = true;
+      }
+    } else {
+      if (elValid) {
+        elValid.textContent = "⚠️ Capital por rejilla insuficiente (< $5)";
+        elValid.className = "calc-item__val is-neg";
+      }
+      if (alertBox) {
+        alertBox.hidden = false;
+        var recommendedCap = num * 5;
+        var maxGrids = Math.max(2, Math.floor(cap / 5));
+        alertBox.innerHTML = "<strong>⚠️ Alerta de Tamaño Mínimo de Binance Spot:</strong><br>" +
+          "Con $" + cap.toFixed(0) + " USDT distribuidos en " + num + " rejillas, cada orden sería de solo <strong>$" + perGrid.toFixed(2) + " USDT</strong>. " +
+          "Binance rechaza cualquier orden menor a $5 USDT.<br>" +
+          "👉 <em>Solución:</em> Asigna al menos <strong>$" + recommendedCap + " USDT</strong> para " + num + " rejillas, o reduce a <strong>" + maxGrids + " rejillas</strong> con tu capital actual.";
+      }
+    }
+  }
+
+  // Presets de capital ($10, $50, $100, $500, $1000)
+  document.querySelectorAll(".preset-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var panel = btn.getAttribute("data-panel");
+      var val = parseFloat(btn.getAttribute("data-val"));
+      if (panel === "bt") {
+        var input = $("bt-cap-input");
+        if (input) { input.value = val; updateBtCapitalSim(); }
+      } else if (panel === "grid") {
+        var input = $("grid-cap-input");
+        if (input) { input.value = val; updateGridCapitalSim(); }
+      }
+      var parent = btn.parentElement;
+      if (parent) {
+        parent.querySelectorAll(".preset-btn").forEach(function (b) { b.classList.remove("is-active"); });
+        btn.classList.add("is-active");
+      }
+    });
+  });
+
+  var btCapInput = $("bt-cap-input");
+  if (btCapInput) {
+    btCapInput.addEventListener("input", updateBtCapitalSim);
+  }
+
+  var gridCapInput = $("grid-cap-input");
+  if (gridCapInput) {
+    gridCapInput.addEventListener("input", updateGridCapitalSim);
+  }
+
+  var gridNumInput = $("grid-num");
+  if (gridNumInput) {
+    gridNumInput.addEventListener("input", updateGridCapitalSim);
+  }
+
+  // Inicializar cálculos inmediatos
+  updateBtCapitalSim();
+  updateGridCapitalSim();
+
+  /* ═══════════════════════════════════════════════════════════════
+     LANZADORES DE BOTS EN VIVO (BINANCE TESTNET)
+     ═══════════════════════════════════════════════════════════════ */
+  function showLaunchFeedback(el, type, msg) {
+    if (!el) return;
+    el.hidden = false;
+    el.className = "launch-feedback launch-feedback--" + type;
+    el.innerHTML = msg;
+  }
+
+  function launchBot(botType, symbol, capital, params, feedbackEl, btnEl) {
+    if (!symbol) {
+      showLaunchFeedback(feedbackEl, "error", "Selecciona una moneda antes de iniciar el bot.");
+      return;
+    }
+    if (capital < 10) {
+      showLaunchFeedback(feedbackEl, "error", "El capital mínimo para operar en Binance es de $10 USDT.");
+      return;
+    }
+    if (btnEl) {
+      btnEl.disabled = true;
+      var sp = btnEl.querySelector(".btn__spinner");
+      if (sp) sp.style.display = "inline-block";
+    }
+
+    fetch("/api/live/bots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        bot_type: botType,
+        symbol: symbol,
+        allocated_capital: capital,
+        params: params || {}
+      })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) {
+            throw new Error(data.detail || "Error al iniciar bot");
+          }
+          return data;
+        });
+      })
+      .then(function (data) {
+        var b = data.bot;
+        showLaunchFeedback(
+          feedbackEl,
+          "success",
+          "🚀 ¡Bot <strong>" + b.name + "</strong> activado con éxito en Binance Testnet con $" + capital.toFixed(2) + " USDT! " +
+          "<button type='button' class='btn-ghost' style='margin-left:8px;padding:3px 10px;font-size:12px;' onclick='window.CryptoLab.switchTab(\"tab-btn-live\")'>Ver en vivo ➜</button>"
+        );
+        pollLiveData();
+      })
+      .catch(function (err) {
+        showLaunchFeedback(feedbackEl, "error", "Error: " + err.message);
+      })
+      .finally(function () {
+        if (btnEl) {
+          btnEl.disabled = false;
+          var sp = btnEl.querySelector(".btn__spinner");
+          if (sp) sp.style.display = "none";
+        }
+      });
+  }
+
+  // Botón Lanzar Scalping 1h
+  var btLaunchBtn = $("bt-launch-btn");
+  if (btLaunchBtn) {
+    btLaunchBtn.addEventListener("click", function () {
+      var sym = btTab.dom.symbol ? btTab.dom.symbol.value : "BTC/USDT";
+      var cap = parseFloat($("bt-cap-input") ? $("bt-cap-input").value : 100) || 100;
+      var feedback = $("bt-launch-feedback");
+      launchBot("scalping_1h", sym, cap, { interval_seconds: 30 }, feedback, btLaunchBtn);
+    });
+  }
+
+  // Botón Lanzar Bot de Malla
+  var gridLaunchBtn = $("grid-launch-btn");
+  if (gridLaunchBtn) {
+    gridLaunchBtn.addEventListener("click", function () {
+      var sym = gridTab.dom.symbol ? gridTab.dom.symbol.value : "SOL/USDT";
+      var cap = parseFloat($("grid-cap-input") ? $("grid-cap-input").value : 100) || 100;
+      var num = parseInt($("grid-num") ? $("grid-num").value : 10, 10) || 10;
+      var lower = $("grid-lower") && $("grid-lower").value ? parseFloat($("grid-lower").value) : null;
+      var upper = $("grid-upper") && $("grid-upper").value ? parseFloat($("grid-upper").value) : null;
+      var feedback = $("grid-launch-feedback");
+      launchBot("grid", sym, cap, { num_grids: num, lower_price: lower, upper_price: upper, interval_seconds: 10 }, feedback, gridLaunchBtn);
+    });
+  }
+
+  // Botón Lanzar desde Panel en Vivo
+  var liveLaunchBtn = $("live-launch-btn");
+  if (liveLaunchBtn) {
+    liveLaunchBtn.addEventListener("click", function () {
+      var sym = $("live-bot-symbol") ? $("live-bot-symbol").value : "SOL/USDT";
+      var botType = $("live-bot-type") ? $("live-bot-type").value : "grid";
+      var cap = parseFloat($("live-bot-capital") ? $("live-bot-capital").value : 100) || 100;
+      var params = botType === "grid" ? { num_grids: 10, interval_seconds: 10 } : { interval_seconds: 30 };
+      launchBot(botType, sym, cap, params, null, liveLaunchBtn);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MONITOREO DE BOTS Y OPERACIONES PERSISTENTES (LIVE FEED)
+     ═══════════════════════════════════════════════════════════════ */
+  function stopBot(botId, btnEl) {
+    if (btnEl) btnEl.disabled = true;
+    fetch("/api/live/bots/" + encodeURIComponent(botId) + "/stop", { method: "POST" })
+      .then(function (res) { return res.json(); })
+      .then(function () {
+        pollLiveData();
+      })
+      .catch(function (err) {
+        alert("Error al detener bot: " + err.message);
+        if (btnEl) btnEl.disabled = false;
+      });
+  }
+  window.CryptoLab.stopBot = stopBot;
+
+  function renderLiveBots(bots) {
+    var gridEl = $("live-bots-grid");
+    var countBadge = $("live-tab-badge");
+    var mActive = $("live-m-active-count");
+    var mCap = $("live-m-total-capital");
+    var mProfit = $("live-m-total-profit");
+    var mTrades = $("live-m-total-trades");
+
+    var activeCount = 0;
+    var totalCap = 0;
+    var totalProfit = 0;
+    var totalTrades = 0;
+
+    bots.forEach(function (b) {
+      if (b.status === "running") activeCount++;
+      totalCap += (b.allocated_capital || 0);
+      totalProfit += (b.realized_profit || 0);
+      totalTrades += (b.total_trades || 0);
+    });
+
+    if (countBadge) countBadge.textContent = activeCount;
+    if (mActive) mActive.textContent = activeCount;
+    if (mCap) mCap.textContent = fmtMoney(totalCap);
+    if (mProfit) {
+      mProfit.textContent = (totalProfit >= 0 ? "+$" : "-$") + Math.abs(totalProfit).toFixed(2);
+      mProfit.className = "stat-card__value " + (totalProfit >= 0 ? "is-pos" : "is-neg");
+    }
+    if (mTrades) mTrades.textContent = totalTrades;
+
+    if (!gridEl) return;
+
+    if (!bots.length) {
+      gridEl.innerHTML = '<div class="empty empty--bots"><p>No hay bots registrados aún. ¡Lanza tu primer bot arriba!</p></div>';
+      return;
+    }
+
+    gridEl.innerHTML = "";
+    bots.forEach(function (b) {
+      var card = document.createElement("article");
+      var isRunning = b.status === "running";
+      card.className = "bot-card" + (isRunning ? "" : " bot-card--stopped");
+
+      var typeBadge = b.bot_type === "grid" ? "🕸️ Malla / Grid" : "⚡ Scalping 1h";
+      var profitStr = (b.realized_profit >= 0 ? "+$" : "-$") + Math.abs(b.realized_profit || 0).toFixed(2);
+      var profitCls = b.realized_profit >= 0 ? "is-pos" : "is-neg";
+
+      var statusBadgeHtml = isRunning
+        ? '<span class="bot-card__status-badge bot-card__status-badge--running"><span class="pulse-dot"></span> En Ejecución</span>'
+        : '<span class="bot-card__status-badge bot-card__status-badge--stopped">⏹️ Detenido</span>';
+
+      var actionBtnHtml = isRunning
+        ? '<button type="button" class="btn-stop" onclick="window.CryptoLab.stopBot(\'' + b.id + '\', this)">⏹️ Detener Bot</button>'
+        : '<span class="text-faint" style="font-size:12px;">Completado</span>';
+
+      card.innerHTML =
+        '<div class="bot-card__head">' +
+          '<div>' +
+            '<h4 class="bot-card__name">' + b.name + '</h4>' +
+            '<p class="bot-card__type">' + typeBadge + ' · ' + b.symbol + '</p>' +
+          '</div>' +
+          statusBadgeHtml +
+        '</div>' +
+        '<div class="bot-card__metrics">' +
+          '<div class="calc-item">' +
+            '<span class="calc-item__label">Capital Asignado</span>' +
+            '<span class="calc-item__val">$' + (b.allocated_capital || 0).toFixed(2) + ' USDT</span>' +
+          '</div>' +
+          '<div class="calc-item">' +
+            '<span class="calc-item__label">Ganancia Realizada</span>' +
+            '<span class="calc-item__val ' + profitCls + '">' + profitStr + '</span>' +
+          '</div>' +
+          '<div class="calc-item">' +
+            '<span class="calc-item__label">Operaciones</span>' +
+            '<span class="calc-item__val">' + (b.total_trades || 0) + ' trades</span>' +
+          '</div>' +
+          '<div class="calc-item">' +
+            '<span class="calc-item__label">Inicio</span>' +
+            '<span class="calc-item__val" style="font-size:11.5px;">' + (b.created_at ? b.created_at.slice(11, 19) + ' UTC' : '—') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="bot-card__actions">' +
+          '<span style="font-size:11.5px;color:var(--text-faint);font-family:var(--mono);">ID: ' + b.id.slice(-8) + '</span>' +
+          actionBtnHtml +
+        '</div>';
+
+      gridEl.appendChild(card);
+    });
+  }
+
+  function renderLiveTrades(trades) {
+    var tbody = $("live-trades-body");
+    if (!tbody) return;
+
+    if (!trades.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="td-empty">Sin órdenes ejecutadas hoy. Al dispararse una compra o venta en Testnet aparecerá aquí de inmediato.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = "";
+    trades.forEach(function (t) {
+      var tr = document.createElement("tr");
+      var isBuy = t.side === "buy";
+      var sideBadge = isBuy
+        ? '<span class="trade-pill trade-pill--buy">COMPRA</span>'
+        : '<span class="trade-pill trade-pill--sell">VENTA</span>';
+
+      var dateStr = t.executed_at ? t.executed_at.replace("T", " ").slice(0, 19) : "—";
+      var profitStr = t.profit ? (t.profit >= 0 ? "+$" : "-$") + Math.abs(t.profit).toFixed(2) : "—";
+      var profitCls = t.profit > 0 ? "is-pos" : (t.profit < 0 ? "is-neg" : "");
+
+      tr.innerHTML =
+        '<td style="font-family:var(--mono);font-size:12px;">' + dateStr + '</td>' +
+        '<td>' + (t.bot_name || t.bot_id) + '</td>' +
+        '<td style="font-weight:600;">' + t.symbol + '</td>' +
+        '<td>' + sideBadge + '</td>' +
+        '<td class="num font-mono">' + fmtPrice(t.price) + '</td>' +
+        '<td class="num font-mono">' + fmtQty(t.qty) + '</td>' +
+        '<td class="num font-mono">$' + (t.cost ? t.cost.toFixed(2) : (t.price * t.qty).toFixed(2)) + '</td>' +
+        '<td class="num font-mono ' + profitCls + '">' + profitStr + '</td>' +
+        '<td style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">' + (t.order_id_exchange || '—') + '</td>';
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function pollLiveData() {
+    // 1. Balance Testnet
+    fetch("/api/live/balance")
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data && data.balances) {
+          var usdt = data.balances["USDT"] != null ? parseFloat(data.balances["USDT"]) : null;
+          var sol = data.balances["SOL"] != null ? parseFloat(data.balances["SOL"]) : null;
+          var btc = data.balances["BTC"] != null ? parseFloat(data.balances["BTC"]) : null;
+          var elUsdt = $("chip-usdt");
+          var elSol = $("chip-sol");
+          var elBtc = $("chip-btc");
+          if (elUsdt) elUsdt.innerHTML = '<span class="chip__dot"></span> USDT: ' + (usdt != null ? "$" + usdt.toLocaleString("en-US", {minimumFractionDigits: 0, maximumFractionDigits: 2}) : "—");
+          if (elSol) elSol.textContent = "SOL: " + (sol != null ? sol.toFixed(2) : "0.00");
+          if (elBtc) elBtc.textContent = "BTC: " + (btc != null ? btc.toFixed(4) : "0.0000");
+        }
+      })
+      .catch(function () {});
+
+    // 2. Bots en Vivo
+    fetch("/api/live/bots")
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var bots = (data && data.bots) || [];
+        renderLiveBots(bots);
+      })
+      .catch(function () {});
+
+    // 3. Trades persistentes en SQLite
+    fetch("/api/live/trades")
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var trades = (data && data.trades) || [];
+        renderLiveTrades(trades);
+      })
+      .catch(function () {});
+  }
+
+  // Refrescar bots manualmente
+  var liveRefreshBtn = $("live-refresh-bots-btn");
+  if (liveRefreshBtn) {
+    liveRefreshBtn.addEventListener("click", function () {
+      pollLiveData();
+    });
+  }
+
+  // Iniciar sondeo en segundo plano cada 4 segundos
+  pollLiveData();
+  setInterval(pollLiveData, 4000);
+
+  /* ═══════════════════════════════════════════════════════════════
      CARGA DE SÍMBOLOS DISPONIBLES
      ═══════════════════════════════════════════════════════════════ */
   function loadSymbols() {
@@ -1248,9 +1662,11 @@
         var syms = (data && data.symbols) || [];
         if (!syms.length) { throw new Error("La lista de símbolos está vacía."); }
 
-        // Poblar select de Backtesting
+        // Poblar selects
         btTab.dom.symbol.innerHTML = "";
         gridTab.dom.symbol.innerHTML = "";
+        var liveSelect = $("live-bot-symbol");
+        if (liveSelect) liveSelect.innerHTML = "";
 
         syms.forEach(function (s) {
           var opt1 = document.createElement("option");
@@ -1262,6 +1678,13 @@
           opt2.value = s;
           opt2.textContent = s;
           gridTab.dom.symbol.appendChild(opt2);
+
+          if (liveSelect) {
+            var opt3 = document.createElement("option");
+            opt3.value = s;
+            opt3.textContent = s;
+            liveSelect.appendChild(opt3);
+          }
         });
 
         btTab.dom.runBtn.disabled = false;
@@ -1283,7 +1706,7 @@
   /* ═══════════════════════════════════════════════════════════════
      EVENT LISTENERS Y ARRANQUE
      ═══════════════════════════════════════════════════════════════ */
-  // Botones de Ejecución
+  // Botones de Ejecución de Backtesting
   btTab.dom.runBtn.addEventListener("click", function () { btTab.run(); });
   btTab.dom.errorDismiss.addEventListener("click", function () { btTab.hideError(); });
   btTab.dom.symbol.addEventListener("keydown", function (ev) {
@@ -1318,3 +1741,4 @@
   // Carga inicial
   loadSymbols();
 })();
+

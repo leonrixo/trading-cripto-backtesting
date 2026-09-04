@@ -40,6 +40,27 @@ class BotManager:
         self._exchange = None
 
         init_db(self.db_path)
+        self.resume_running_bots()
+
+    def resume_running_bots(self):
+        """Reinicia los hilos de fondo para bots que estaban marcados como 'running' en la base de datos."""
+        with self._lock:
+            running_bots = list_bots(status="running", db_path=self.db_path)
+            for b in running_bots:
+                bot_id = b["id"]
+                if bot_id in self._threads and self._threads[bot_id].is_alive():
+                    continue
+                stop_event = threading.Event()
+                self._stop_events[bot_id] = stop_event
+                target_fn = self._run_grid_worker if b["bot_type"] == "grid" else self._run_scalping_worker
+                thread = threading.Thread(
+                    target=target_fn,
+                    args=(bot_id, b["symbol"], b["allocated_capital"], b["params"], stop_event),
+                    daemon=True,
+                    name=f"Worker-{bot_id}",
+                )
+                self._threads[bot_id] = thread
+                thread.start()
 
     @property
     def exchange(self) -> ccxt.binance:

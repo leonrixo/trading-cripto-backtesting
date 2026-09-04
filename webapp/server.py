@@ -254,6 +254,14 @@ def get_trades_for_bot(bot_id: str):
     return {"bot_id": bot_id, "trades": trades}
 
 
+@app.get("/api/live/trades")
+def get_all_live_trades(limit: int = 50):
+    from bot_database import get_recent_trades
+    trades = get_recent_trades(limit=limit, db_path=bot_manager.db_path)
+    return {"trades": trades}
+
+
+
 app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 
 
